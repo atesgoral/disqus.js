@@ -1,5 +1,6 @@
 /**
- * <h3>JavaScript library for Disqus API 1.1</h3>
+ * <h2>Disqus.js</h2>
+ * <h3>A JavaScript library for Disqus API v1.1</h3>
  *
  * @version 0.1 alpha
  * @author Ates Goral
@@ -11,37 +12,52 @@
  * @requires jQuery
  * @see <a href="http://disqus.com/">Disqus</a>
  * @see <a href="http://jquery.com/">jQuery</a>
+ *
  * @namespace disqus.js namespace
  */
 var disqus = (function () {
+    /** Counter to generate unique request identifiers */
 	var apiCallCnt = 0;
 
+    /** Stores user settings */
     var settings = {
-		/** @inner */
+        /** Default to no logging */
         logger: function () {}
     };
 
+    /** Local logging helper */
     function log(s) {
         settings.logger(s);
     }
 
-	function distillArgs(args) {
-		var distilled = {};
+    /**
+     * Extract callback and options arguments from the given arguments array,
+     * based on the type and order of arguments.
+     * The first Function encountered is used as the success/done callback.
+     * Second Function becomes the failure callback.
+     * An Object becomes the options argument.
+     * Arguments of other types are ignored.
+     */
+	function extractArgs(args) {
+		var extracted = {};
 		
 		$.each(args, function (i, arg) {
 			switch (arg.constructor) {
 			case Function:
-				distilled.successFn = distilled.successFn || arg;
-				distilled.failureFn = !distilled.successFn && arg;
+				extracted.successFn = extracted.successFn || arg;
+				extracted.failureFn = !extracted.successFn && arg;
 				break;
 			case Object:
-				distilled.options = arg;
+				extracted.options = arg;
 			}
 		});
 		
-		return distilled;
+		return extracted;
 	}
 	
+    /**
+     * Format date to ISO format
+     */
     function formatDate(date) {
         return "2009-03-30T15:41"; // UTC
     }
@@ -49,7 +65,7 @@ var disqus = (function () {
     function apiGet(args, apiMethod, params, processFn) {
         var apiCallRef = ++apiCallCnt;
         var handlerName = "_handler" + apiCallRef;
-		var distilled = distillArgs(args);
+		var extracted = extractArgs(args);
         
         disqus[handlerName] = function (response) {
             delete disqus[handlerName];
@@ -61,10 +77,10 @@ var disqus = (function () {
                     : "failed (" + response.code + ")"));
 
             if (response.succeeded) {
-                distilled.successFn && distilled.successFn(
+                extracted.successFn && extracted.successFn(
 					processFn ? processFn(response.message) : response.message);
             } else {
-                distilled.failureFn && distilled.failureFn(response.code);
+                extracted.failureFn && extracted.failureFn(response.code);
             }
         };
 
@@ -76,14 +92,14 @@ var disqus = (function () {
             data: $.extend({
                 api_version: "1.1",
                 api_response_format: "jsonp:disqus." + handlerName
-            }, params, distilled.options)
+            }, params, extracted.options)
         });
     }
 	
     function apiPost(args, apiMethod, params) {
         var apiCallRef = ++apiCallCnt;
         var targetName = "_target" + apiCallRef;
-		var distilled = distillArgs(args);
+		var extracted = extractArgs(args);
 
         var $container = $('<div style="display: none"></div>');
         var $iframe = $('<iframe name="' + targetName + '"></iframe>');
@@ -93,7 +109,7 @@ var disqus = (function () {
         var data = $.extend({
 			api_version: "1.1",
 			api_response_format: "jsonp:void" // No return
-		}, params, distilled.options);
+		}, params, extracted.options);
 
         for (var p in data) {
             $form.append($('<input type="hidden" name="' + p
@@ -106,7 +122,7 @@ var disqus = (function () {
             setTimeout(function () {
                 log(apiMethod + " (" + apiCallRef + ") done");
                 container.remove();
-                distilled.successFn && distilled.successFn();
+                extracted.successFn && extracted.successFn();
             }, 1);
         });
         
@@ -252,7 +268,7 @@ var disqus = (function () {
                 invoke.apply(forum, args);
             },
 			function (code) {
-				distillArgs(args).failureFn(code);
+				extractArgs(args).failureFn(code);
 			});
         }
         return this;
