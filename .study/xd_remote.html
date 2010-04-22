@@ -1,0 +1,17 @@
+<html>
+<head>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script type="text/javascript">
+$(function () {
+	console.log("loaded");
+	window.name = "omg";
+	console.log("name: " + window.name);
+	setTimeout(function () {
+		window.document.location.reload();
+	}, 10000);
+});
+</script>
+</head>
+<body>
+</body>
+</html>

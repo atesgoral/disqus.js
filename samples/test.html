@@ -1,0 +1,69 @@
+<html>
+<head>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script type="text/javascript" src="../disqus.js"></script>
+<script type="text/javascript">
+function listForums(forums) {
+    var $container = $("#forums");
+
+    $container.empty();
+
+    $.each(forums, function (i, forum) {
+        $container.append($("<option>" + forum.name + "</option>"));
+    });
+    
+    if (forums.length) {
+        forums[0].getThreadList({}, listThreads)
+            //.getForumApiKey(function (key) { console.log("Key: " + key); })
+            //.getForumPosts({}, function (posts) { console.log("Posts: " + posts.length); })
+            //.getCategoriesList(function (categories) { console.log("Categories: " + categories.toSource()); })
+            //.getUpdatedThreads(new Date(), function (threads) { console.log("Updated Threads: " + threads.toSource()); })
+            .getThreadByUrl("http://blog.magnetiq.com/post/525240630", {}, function (thread) { console.log("Thread by URL: " + thread.toSource()); })
+    }
+}
+
+function listThreads(threads) {
+    var $container = $("#threads");
+
+    $container.empty();
+
+    $.each(threads, function (i, thread) {
+        $container.append($('<li><a href="' + thread.url
+            + '">'
+            + thread.title
+            + '</a>'));
+    });
+    
+    if (threads.length) {
+        //threads[3].getThreadPosts({}, function (posts) { console.log("Thread Posts: " + posts.toSource()); });
+    }
+}
+
+$(function () {
+    $("#user_key_lookup").attr("href", disqus.userKeyUrl);
+
+    $("#user_key").keypress(function (e) {
+        if ((e.keyCode || e.which) == 13) {
+            disqus.setUserKey(this.value)
+                .getForumList(listForums)
+                //.getNumPosts([86671897, 85404586], function (message) { console.log("Num posts: " + message.toSource()); })
+        }
+    }).val(document.location.search.replace("?", ""));
+});
+
+if (window.console && console.log) {
+    disqus.setLogger(function (s) { console.log(s); })
+}
+</script>
+</head>
+<body>
+<h3>User Key</h3>
+<input type="text" size="64" id="user_key"/> <a href="#" id="user_key_lookup" target="_blank">?</a>
+<h3>Forums</h3>
+<select id="forums">
+</select>
+<h3>Threads</h3>
+<ol id="threads">
+</ol>
+</body>
+</html>
