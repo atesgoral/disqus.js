@@ -1,8 +1,23 @@
-/** @namespace disqus.js namespace */
+/**
+ * <h3>JavaScript library for Disqus API 1.1</h3>
+ *
+ * @version 0.1 alpha
+ * @author Ates Goral
+ *
+ * <p>Can be used from a static HTML page, entirely on the client-side.
+ * One caveat is that certain POST method API calls are rendered useless because
+ * their results cannot be retrieved.</p>
+ *
+ * @requires jQuery
+ * @see <a href="http://disqus.com/">Disqus</a>
+ * @see <a href="http://jquery.com/">jQuery</a>
+ * @namespace disqus.js namespace
+ */
 var disqus = (function () {
 	var apiCallCnt = 0;
 
     var settings = {
+		/** @inner */
         logger: function () {}
     };
 
@@ -100,13 +115,16 @@ var disqus = (function () {
         $form.submit();
     }
     
-    /* Forum class */
-
-    function Forum() {
-    }
+    /**
+	 * Creates a new Forum
+	 * @class Represents a Disqus forum (or website)
+	 * @name Forum
+	 */
+    function Forum() {}
     
-    /* Forum API methods */
-    
+	/**
+	 * Get the API key for this Forum
+	 */
     Forum.prototype.getForumApiKey = function () {
         apiGet(arguments,
 			"get_forum_api_key",
@@ -240,26 +258,34 @@ var disqus = (function () {
         return this;
     };
     
-    /* Category class */
-
-    function Category() {
-    }
+    /**
+	 * Creates a new Category
+	 * @class Represents a Disqus category
+	 * @name Category
+	 */
+    function Category() {}
     
-    /* Thread class */
+    /**
+	 * Creates a new Thread
+	 * @class Represents a Disqus discussion thread
+	 * @name Thread
+	 */
+    function Thread() {}
 
-    function Thread() {
-    }
-
-    /*
-    Optional arguments:
-
-        * limit — Number of entries that should be included in the response. Default is 25.
-        * start — Starting point for the query. Default is 0.
-        * filter — Type of entries that should be returned (new, spam or killed).
-        * exclude — Type of entries that should be excluded from the response (new, spam or killed).
-    */
-    
-    // doesn't work?
+	/**
+	 * Get a list of posts in a thread
+	 *
+	 * @param {Object} [options] Object with optional parameters
+	 * @param {Number} [options.limit] Number of entries that should be included
+	 *                                 in the response. Default is 25.
+	 * @param {Number} [options.start] Starting point for the query. Default is
+	 *                                 0.
+	 * @param {String[]} [options.filter] Type of entries that should be
+	 *                                    returned (new, spam or killed).
+	 * @param {String[]} [options.exclude] Type of entries that should be
+	 *                                     excluded from the response (new, spam
+	 *                                     or killed).
+	 */
     Thread.prototype.getThreadPosts = function () {
         apiGet(arguments,
 			"get_thread_posts",
@@ -278,10 +304,27 @@ var disqus = (function () {
         return this;    
     };
 
-    /* Post class */
-
-    function Post() {
-    }
+    /**
+	 * Creates a new Post
+	 * @class Represents a Disqus discussion post
+	 * @name Post
+	 */
+    function Post() {}
+	
+	/**
+	 * Delete this post or mark it as spam (or not spam)
+	 * @param {String} action Name of action to be performed. Value can be
+	 *                        "spam", "approve" or "kill".
+	 * @param {Function} [doneFn] Callback function to call when API call is
+	 *                            made. The outcome of this API call cannot be
+	 *                            known.
+	 */
+	Post.prototype.moderatePost = function (action) {
+		apiPost(arguments,
+			"moderate_post",
+			{ user_api_key: settings.user_key, post_id: this.id,
+				action: action });
+	};
 
 	/** @scope disqus */
     return {
