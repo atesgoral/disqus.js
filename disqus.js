@@ -22,7 +22,7 @@
  */
 var disqus = (function () {
     /** Counter to generate unique request identifiers */
-	var apiCallCnt = 0;
+    var apiCallCnt = 0;
 
     /** Stores user settings */
     var settings = {
@@ -30,10 +30,10 @@ var disqus = (function () {
         logger: function () {}
     };
 
-	////////////////////////////////////////////////////////////////////////////
-	// Private utilities
-	////////////////////////////////////////////////////////////////////////////
-	
+    ////////////////////////////////////////////////////////////////////////////
+    // Private utilities
+    ////////////////////////////////////////////////////////////////////////////
+    
     /** Local logging helper */
     function log(s) {
         settings.logger(s);
@@ -42,51 +42,51 @@ var disqus = (function () {
     /**
      * Extract callback and options arguments from the given arguments array,
      * based on the type and order of arguments:
-	 * <ul>
+     * <ul>
      * <li>The first Function encountered is used as the success/done callback.
-	 * </li>
+     * </li>
      * <li>Second Function becomes the failure callback.</li>
      * <li>An Object becomes the options argument.</li>
      * <li>Arguments of other types are ignored.</li>
-	 * </ul>
+     * </ul>
      */
-	function extractArgs(args) {
-		var extracted = {};
-		
-		$.each(args, function (i, arg) {
-			switch (arg.constructor) {
-			case Function:
-				extracted.successFn = extracted.successFn || arg;
-				extracted.failureFn = !extracted.successFn && arg;
-				break;
-			case Object:
-				extracted.options = arg;
-			}
-		});
-		
-		return extracted;
-	}
-	
+    function extractArgs(args) {
+        var extracted = {};
+        
+        $.each(args, function (i, arg) {
+            switch (arg.constructor) {
+            case Function:
+                extracted.successFn = extracted.successFn || arg;
+                extracted.failureFn = !extracted.successFn && arg;
+                break;
+            case Object:
+                extracted.options = arg;
+            }
+        });
+        
+        return extracted;
+    }
+    
     /**
      * Format date to ISO format
      */
     function formatDate(date) {
-		function pad(n) {
-			return n >9 ? n : "0" + n;
-		}
+        function pad(n) {
+            return n >9 ? n : "0" + n;
+        }
 
-		return [ date.getUTCFullYear(), "-", pad(date.getUTCMonth() + 1), "-",
-			pad(date.getUTCDate() + 1), "T", pad(date.getUTCHours()), ":",
-			pad(date.getUTCMinutes()) ].join("");
+        return [ date.getUTCFullYear(), "-", pad(date.getUTCMonth() + 1), "-",
+            pad(date.getUTCDate() + 1), "T", pad(date.getUTCHours()), ":",
+            pad(date.getUTCMinutes()) ].join("");
     }
 
-	/**
-	 * Cross-domain GET through JSONP
-	 */
+    /**
+     * Cross-domain GET through JSONP
+     */
     function apiGet(args, apiMethod, params, processFn) {
         var apiCallRef = ++apiCallCnt;
         var handlerName = "_handler" + apiCallRef;
-		var extracted = extractArgs(args);
+        var extracted = extractArgs(args);
         
         disqus[handlerName] = function (response) {
             delete disqus[handlerName];
@@ -99,7 +99,7 @@ var disqus = (function () {
 
             if (response.succeeded) {
                 extracted.successFn && extracted.successFn(
-					processFn ? processFn(response.message) : response.message);
+                    processFn ? processFn(response.message) : response.message);
             } else {
                 extracted.failureFn && extracted.failureFn(response.code);
             }
@@ -116,14 +116,14 @@ var disqus = (function () {
             }, params, extracted.options)
         });
     }
-	
-	/**
-	 * Cross-domain POST through form submit, with no access to response
-	 */
+    
+    /**
+     * Cross-domain POST through form submit, with no access to response
+     */
     function apiPost(args, apiMethod, params) {
         var apiCallRef = ++apiCallCnt;
         var targetName = "_target" + apiCallRef;
-		var extracted = extractArgs(args);
+        var extracted = extractArgs(args);
 
         var $container = $('<div style="display: none"></div>');
         var $iframe = $('<iframe name="' + targetName + '"></iframe>');
@@ -131,9 +131,9 @@ var disqus = (function () {
             + '" action="http://disqus.com/api/' + apiMethod + '/"></form>');
 
         var data = $.extend({
-			api_version: "1.1",
-			api_response_format: "jsonp:void" // No return
-		}, params, extracted.options);
+            api_version: "1.1",
+            api_response_format: "jsonp:void" // No return
+        }, params, extracted.options);
 
         for (var p in data) {
             $form.append($('<input type="hidden" name="' + p
@@ -156,76 +156,76 @@ var disqus = (function () {
     }
     
     /**
-	 * Helper for API methods that require a forum API key.
-	 *
-	 * <p>If the API key for the forum is already known, the API
-	 * method will directly be invoked. Otherwise, a getForumApiKey call will be
-	 * made to get the key before the original API method is invoked.</p>
-	 *
-	 * @param {Function} apiCallFn A function that wraps an apiGet or apiPost
-	 *                             call with all the necessary arguments.
-	 * @param {Forum} forum The Forum object.
-	 * @param {Array} args The arguments array from the original API function
-	 *                     call on the target object.
-	 * @param {Forum|Thread} [target] The target object. Defaults to the Forum
-	 *                                object.
-	 */
-	function requireForumApiKey(apiCallFn, forum, args, target) {
-		// Have a forum API key already?
+     * Helper for API methods that require a forum API key.
+     *
+     * <p>If the API key for the forum is already known, the API
+     * method will directly be invoked. Otherwise, a getForumApiKey call will be
+     * made to get the key before the original API method is invoked.</p>
+     *
+     * @param {Function} apiCallFn A function that wraps an apiGet or apiPost
+     *                             call with all the necessary arguments.
+     * @param {Forum} forum The Forum object.
+     * @param {Array} args The arguments array from the original API function
+     *                     call on the target object.
+     * @param {Forum|Thread} [target] The target object. Defaults to the Forum
+     *                                object.
+     */
+    function requireForumApiKey(apiCallFn, forum, args, target) {
+        // Have a forum API key already?
         if (forum.api_key) {
-			// Invoke the API call now
+            // Invoke the API call now
             apiCallFn.apply(target || forum, args);
         } else {
-			// Defer until we get the API key
+            // Defer until we get the API key
             forum.getForumApiKey(function (api_key) {
                 forum.api_key = api_key;
                 apiCallFn.apply(target || forum, args);
             },
-			function (code) {
-				extractArgs(args).failureFn(code);
-			});
+            function (code) {
+                extractArgs(args).failureFn(code);
+            });
         }
-	}
+    }
 
-	////////////////////////////////////////////////////////////////////////////
-	// Forum class
-	////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    // Forum class
+    ////////////////////////////////////////////////////////////////////////////
 
     /**
-	 * Creates a new Forum
-	 * @class Represents a Disqus forum (or website)
-	 * @name Forum
-	 * @param {Number} [id] The forum id.
-	 */
+     * Creates a new Forum
+     * @class Represents a Disqus forum (or website)
+     * @name Forum
+     * @param {Number} [id] The forum id.
+     */
     function Forum(id) {
-		this.id = id;
-	}
+        this.id = id;
+    }
 
-	/**
-	 * Get the API key for this Forum
-	 */
+    /**
+     * Get the API key for this Forum
+     */
     Forum.prototype.getForumApiKey = function () {
         apiGet(arguments,
-			"get_forum_api_key",
+            "get_forum_api_key",
             { user_api_key: settings.user_key, forum_id: this.id });
         return this;
     };
 
     /**
-	 * @param {Object} [options] Object with optional parameters
-  	 * @param {Number} [options.category_id] Filter entries by category
-	 * @param {Number} [options.limit] Number of entries that should be included
-	 *                                 in the response. Default is 25.
-	 * @param {Number} [options.start] Starting point for the query. Default is
-	 *                                 0.
-	 * @param {String[]} [options.filter] Type of entries that should be
-	 *                                    returned.
-	 * @param {String[]} [options.exclude] Type of entries that should be
-	 *                                     excluded from the response.
+     * @param {Object} [options] Object with optional parameters
+       * @param {Number} [options.category_id] Filter entries by category
+     * @param {Number} [options.limit] Number of entries that should be included
+     *                                 in the response. Default is 25.
+     * @param {Number} [options.start] Starting point for the query. Default is
+     *                                 0.
+     * @param {String[]} [options.filter] Type of entries that should be
+     *                                    returned.
+     * @param {String[]} [options.exclude] Type of entries that should be
+     *                                     excluded from the response.
      */
     Forum.prototype.getForumPosts = function () {
         apiGet(arguments,
-			"get_forum_posts",
+            "get_forum_posts",
             { user_api_key: settings.user_key, forum_id: this.id },
             function (message) {
                 var posts = [];
@@ -243,7 +243,7 @@ var disqus = (function () {
     
     Forum.prototype.getCategoriesList = function () {
         apiGet(arguments,
-			"get_categories_list",
+            "get_categories_list",
             { user_api_key: settings.user_key, forum_id: this.id },
             function (message) {
                 var categories = [];
@@ -258,12 +258,12 @@ var disqus = (function () {
     };
     
     /**
-	 * @param {Object} [options] Object with optional parameters
+     * @param {Object} [options] Object with optional parameters
      * @param {Number} [options.category_id] Filter entries by their category.
      */
     Forum.prototype.getThreadList = function () {
         apiGet(arguments,
-			"get_thread_list",
+            "get_thread_list",
             { user_api_key: settings.user_key, forum_id: this.id },
             function (message) {
                 var threads = [];
@@ -281,7 +281,7 @@ var disqus = (function () {
     
     Forum.prototype.getUpdatedThreads = function (since) {
         apiGet(arguments,
-			"get_updated_threads",
+            "get_updated_threads",
             { user_api_key: settings.user_key, forum_id: this.id,
                 since: formatDate(since) },
             function (message) {
@@ -298,96 +298,96 @@ var disqus = (function () {
         return this;
     };
 
-	/**
-	 * Get or create thread by identifier
-	 *
-	 * This method tries to find a thread by its identifier and title. If there
-	 * is no such thread, the method creates it. In either case, the output
-	 * value is a thread object.
-	 *
+    /**
+     * Get or create thread by identifier
+     *
+     * This method tries to find a thread by its identifier and title. If there
+     * is no such thread, the method creates it. In either case, the output
+     * value is a thread object.
+     *
      * @param {String} identifier Unique value (per forum) for a thread that is
-	 *                            used to keep be able to get data even if
-	 *                            permalink is changed.
+     *                            used to keep be able to get data even if
+     *                            permalink is changed.
      * @param {String} title If thread does not exist, the method will create it
-	 *                       with the specified title (can be an empty string if
-	 *                       you are sure that the thread exists)
-	 * @param {Object} [options] Object with optional parameters
-	 * @param {Number} [options.category_id] If thread does not exist, the
-	 *                                       method will create it in the
-	 *                                       specified category
-	 * @param {Function} [doneFn] Callback function to call when API call is
-	 *                            made. The outcome of this API call cannot be
-	 *                            known.
+     *                       with the specified title (can be an empty string if
+     *                       you are sure that the thread exists)
+     * @param {Object} [options] Object with optional parameters
+     * @param {Number} [options.category_id] If thread does not exist, the
+     *                                       method will create it in the
+     *                                       specified category
+     * @param {Function} [doneFn] Callback function to call when API call is
+     *                            made. The outcome of this API call cannot be
+     *                            known.
      */	
     Forum.prototype.threadByIdentifier = function (identifier, title) {
         requireForumApiKey(function () {
-			apiPost(arguments,
-				"thread_by_identifier",
-				{ forum_api_key: this.api_key, identifier: identifier,
-					title: title });
+            apiPost(arguments,
+                "thread_by_identifier",
+                { forum_api_key: this.api_key, identifier: identifier,
+                    title: title });
         }, this, arguments);
         
         return this;
     };
     
     /**
-	 * @param {Object} [options] Object with optional parameters
-	 * @param {String} [options.partner_api_key]
+     * @param {Object} [options] Object with optional parameters
+     * @param {String} [options.partner_api_key]
      */      
     Forum.prototype.getThreadByUrl = function (url) {
-		requireForumApiKey(function () {
+        requireForumApiKey(function () {
             apiGet(arguments,
-				"get_thread_by_url",
+                "get_thread_by_url",
                 { forum_api_key: this.api_key, url: url },
-				function (message) {
+                function (message) {
                     return $.extend(new Thread(), message, {
                         created_at: new Date(message.created_at)
                     });
-				});
+                });
         }, this, arguments);
         
         return this;
     };
     
-	////////////////////////////////////////////////////////////////////////////
-	// Category class
-	////////////////////////////////////////////////////////////////////////////
-	
+    ////////////////////////////////////////////////////////////////////////////
+    // Category class
+    ////////////////////////////////////////////////////////////////////////////
+    
     /**
-	 * Creates a new Category
-	 * @class Represents a Disqus category
-	 * @name Category
-	 */
+     * Creates a new Category
+     * @class Represents a Disqus category
+     * @name Category
+     */
     function Category() {}
     
-	////////////////////////////////////////////////////////////////////////////
-	// Thread class
-	////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    // Thread class
+    ////////////////////////////////////////////////////////////////////////////
 
     /**
-	 * Creates a new Thread
-	 * @class Represents a Disqus discussion thread
-	 * @name Thread
-	 */
+     * Creates a new Thread
+     * @class Represents a Disqus discussion thread
+     * @name Thread
+     */
     function Thread() {}
 
-	/**
-	 * Get a list of posts in a thread
-	 *
-	 * @param {Object} [options] Object with optional parameters
-	 * @param {Number} [options.limit] Number of entries that should be included
-	 *                                 in the response. Default is 25.
-	 * @param {Number} [options.start] Starting point for the query. Default is
-	 *                                 0.
-	 * @param {String[]} [options.filter] Type of entries that should be
-	 *                                    returned (new, spam or killed).
-	 * @param {String[]} [options.exclude] Type of entries that should be
-	 *                                     excluded from the response (new, spam
-	 *                                     or killed).
-	 */
+    /**
+     * Get a list of posts in a thread
+     *
+     * @param {Object} [options] Object with optional parameters
+     * @param {Number} [options.limit] Number of entries that should be included
+     *                                 in the response. Default is 25.
+     * @param {Number} [options.start] Starting point for the query. Default is
+     *                                 0.
+     * @param {String[]} [options.filter] Type of entries that should be
+     *                                    returned (new, spam or killed).
+     * @param {String[]} [options.exclude] Type of entries that should be
+     *                                     excluded from the response (new, spam
+     *                                     or killed).
+     */
     Thread.prototype.getThreadPosts = function () {
         apiGet(arguments,
-			"get_thread_posts",
+            "get_thread_posts",
             { user_api_key: settings.user_key, thread_id: this.id },
             function (message) {
                 var posts = [];
@@ -402,92 +402,92 @@ var disqus = (function () {
             });
         return this;    
     };
-	
-	/**
-	 * Update thread with values in the options argument.
-	 * @param {Object} options Object with optional parameters
+    
+    /**
+     * Update thread with values in the options argument.
+     * @param {Object} options Object with optional parameters
      * @param {String} [options.title]
      * @param {Boolean} [options.allow_comments]
      * @param {String} [options.slug]
      * @param {String} [options.url]
-	 * @param {Function} [doneFn] Callback function to call when API call is
-	 *                            made. The outcome of this API call cannot be
-	 *                            known.
-	 */
-	Thread.prototype.updateThread = function () {
-		var forum = new Forum(this.forum); // todo: use factory for the chance
-		                                   // of the Forum already being there.
-		requireForumApiKey(function () {
-			apiPost(arguments,
-				"update_thread",
-				{ forum_api_key: forum.api_key, thread_id: this.thread_id });
-		}, forum, arguments, this);
+     * @param {Function} [doneFn] Callback function to call when API call is
+     *                            made. The outcome of this API call cannot be
+     *                            known.
+     */
+    Thread.prototype.updateThread = function () {
+        var forum = new Forum(this.forum); // todo: use factory for the chance
+                                           // of the Forum already being there.
+        requireForumApiKey(function () {
+            apiPost(arguments,
+                "update_thread",
+                { forum_api_key: forum.api_key, thread_id: this.thread_id });
+        }, forum, arguments, this);
 
-		return this;
-	};
-	
-	/**
-	 * Create a new post (i.e. add a new comment)
+        return this;
+    };
+    
+    /**
+     * Create a new post (i.e. add a new comment)
      * @param {String} message
      * @param {String} author_name
      * @param {String} author_email
-	 * @param {Object} [options] Object with optional parameters
-	 * @param {String} [options.partner_api_key]
-	 * @param {Date} [options.created_at]
-	 * @param {String} [options.ip_address]
-	 * @param {String} [options.author_url]
-	 * @param {String} [options.parent_post]
-	 * @param {String} [options.state] Comment's state, must be one of:
-	 *                                 approved, unapproved, spam, killed
-	 * @param {Function} [doneFn] Callback function to call when API call is
-	 *                            made. The outcome of this API call cannot be
-	 *                            known.
-	 */
-	Thread.prototype.createPost = function (message, author_name, author_email) {
-		var forum = new Forum(this.forum);
+     * @param {Object} [options] Object with optional parameters
+     * @param {String} [options.partner_api_key]
+     * @param {Date} [options.created_at]
+     * @param {String} [options.ip_address]
+     * @param {String} [options.author_url]
+     * @param {String} [options.parent_post]
+     * @param {String} [options.state] Comment's state, must be one of:
+     *                                 approved, unapproved, spam, killed
+     * @param {Function} [doneFn] Callback function to call when API call is
+     *                            made. The outcome of this API call cannot be
+     *                            known.
+     */
+    Thread.prototype.createPost = function (message, author_name, author_email) {
+        var forum = new Forum(this.forum);
 
-		requireForumApiKey(function () {
-			apiPost(arguments,
-				"create_post",
-				{ forum_api_key: forum.api_key, thread_id: this.thread_id,
-					message: message, author_name: author_name,
-					author_email: author_email });
-		}, forum, arguments, this);
+        requireForumApiKey(function () {
+            apiPost(arguments,
+                "create_post",
+                { forum_api_key: forum.api_key, thread_id: this.thread_id,
+                    message: message, author_name: author_name,
+                    author_email: author_email });
+        }, forum, arguments, this);
 
-		return this;
-	};
+        return this;
+    };
 
-	////////////////////////////////////////////////////////////////////////////
-	// Post class
-	////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    // Post class
+    ////////////////////////////////////////////////////////////////////////////
 
     /**
-	 * Creates a new Post
-	 * @class Represents a Disqus discussion post
-	 * @name Post
-	 */
+     * Creates a new Post
+     * @class Represents a Disqus discussion post
+     * @name Post
+     */
     function Post() {}
-	
-	/**
-	 * Delete this post or mark it as spam (or not spam)
-	 * @param {String} action Name of action to be performed. Value can be
-	 *                        "spam", "approve" or "kill".
-	 * @param {Function} [doneFn] Callback function to call when API call is
-	 *                            made. The outcome of this API call cannot be
-	 *                            known.
-	 */
-	Post.prototype.moderatePost = function (action) {
-		apiPost(arguments,
-			"moderate_post",
-			{ user_api_key: settings.user_key, post_id: this.id,
-				action: action });
-	};
+    
+    /**
+     * Delete this post or mark it as spam (or not spam)
+     * @param {String} action Name of action to be performed. Value can be
+     *                        "spam", "approve" or "kill".
+     * @param {Function} [doneFn] Callback function to call when API call is
+     *                            made. The outcome of this API call cannot be
+     *                            known.
+     */
+    Post.prototype.moderatePost = function (action) {
+        apiPost(arguments,
+            "moderate_post",
+            { user_api_key: settings.user_key, post_id: this.id,
+                action: action });
+    };
 
-	////////////////////////////////////////////////////////////////////////////
-	// disqus namespace members
-	////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    // disqus namespace members
+    ////////////////////////////////////////////////////////////////////////////
 
-	/** @scope disqus */
+    /** @scope disqus */
     return {
         userKeyUrl: "http://disqus.com/api/get_my_key/",
 
@@ -505,16 +505,16 @@ var disqus = (function () {
 
         getUserName: function () {
             apiPost(arguments,
-				"get_user_name",
+                "get_user_name",
                 { user_api_key: settings.user_key });
             return this;
         },
         
         getForumList: function () {
-			apiGet(arguments,
-				"get_forum_list",
-				{ user_api_key: settings.user_key },
-				function (message) {
+            apiGet(arguments,
+                "get_forum_list",
+                { user_api_key: settings.user_key },
+                function (message) {
                     var forums = [];
                     
                     $.each(message, function (i, forum_data) {
@@ -523,16 +523,16 @@ var disqus = (function () {
                         }));
                     });
 
-					return forums;
-				});
+                    return forums;
+                });
             return this;
         },
         
         getNumPosts: function (threadIds) {
             apiGet(arguments,
-				"get_num_posts",
+                "get_num_posts",
                 { user_api_key: settings.user_key,
-					thread_ids: threadIds.toString() });
+                    thread_ids: threadIds.toString() });
             return this;
         }
     };
