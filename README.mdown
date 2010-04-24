@@ -1,0 +1,16 @@
+# disqus.js: A pure client-side JavaScript library for the Disqus API
+
+This is a client-side JavaScript implementation of the Disqus API (version 1.1)
+that allows you to use the API from a static HTML directly inside your browser.
+
+It uses JSONP for GET API calls and form posts for POST API calls. As a
+consequence, the result of POST API calls cannot be known. But this only affects
+a couple of API methods only. The library is functional and usable for
+everything else.
+
+More usage examples will be added to the samples directory soon.
+
+## License and Copyright
+
+Copyright (c) 2010 [Ates Goral](http://atesgoral.com/)
+Licensed under the [MIT license](http://www.opensource.org/licenses/mit-license.php).
