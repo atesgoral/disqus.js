@@ -40,25 +40,21 @@ function listThreads(threads) {
 }
 
 $(function () {
-    $("#user_key_lookup").attr("href", disqus.userKeyUrl);
+    $("#api_key_lookup").attr("href", disqus.userKeyUrl);
 
-    $("#user_key").keypress(function (e) {
+    $("#api_key").keypress(function (e) {
         if ((e.keyCode || e.which) == 13) {
-            disqus.setUserKey(this.value)
+            disqus.setApiKey(this.value)
                 .getForumList(listForums)
                 //.getNumPosts([86671897, 85404586], function (message) { console.log("Num posts: " + message.toSource()); })
         }
     }).val(document.location.search.replace("?", ""));
 });
-
-if (window.console && console.log) {
-    disqus.setLogger(function (s) { console.log(s); })
-}
 </script>
 </head>
 <body>
-<h3>User Key</h3>
-<input type="text" size="64" id="user_key"/> <a href="#" id="user_key_lookup" target="_blank">?</a>
+<h3>API Key</h3>
+<input type="text" size="64" id="api_key"/> <a href="#" id="api_key_lookup" target="_blank">?</a>
 <h3>Forums</h3>
 <select id="forums">
 </select>

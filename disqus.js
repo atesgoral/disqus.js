@@ -20,15 +20,12 @@
  *
  * @namespace disqus.js namespace
  */
-var disqus = (function () {
+var disqus = (function ($, logFn) {
     /** Counter to generate unique request identifiers */
     var apiCallCnt = 0;
 
-    /** Stores user settings */
-    var settings = {
-        /** Default to no logging */
-        logger: function () {}
-    };
+    /** Stores user API key */
+    var apiKey;
 
     ////////////////////////////////////////////////////////////////////////////
     // Private utilities
@@ -36,7 +33,7 @@ var disqus = (function () {
     
     /** Local logging helper */
     function log(s) {
-        settings.logger(s);
+        logFn && logFn(s);
     }
 
     /**
@@ -172,13 +169,13 @@ var disqus = (function () {
      */
     function requireForumApiKey(apiCallFn, forum, args, target) {
         // Have a forum API key already?
-        if (forum.api_key) {
+        if (forum.apiKey) {
             // Invoke the API call now
             apiCallFn.apply(target || forum, args);
         } else {
             // Defer until we get the API key
             forum.getForumApiKey(function (api_key) {
-                forum.api_key = api_key;
+                forum.apiKey = api_key;
                 apiCallFn.apply(target || forum, args);
             },
             function (code) {
@@ -207,7 +204,7 @@ var disqus = (function () {
     Forum.prototype.getForumApiKey = function () {
         apiGet(arguments,
             "get_forum_api_key",
-            { user_api_key: settings.user_key, forum_id: this.id });
+            { user_api_key: apiKey, forum_id: this.id });
         return this;
     };
 
@@ -226,7 +223,7 @@ var disqus = (function () {
     Forum.prototype.getForumPosts = function () {
         apiGet(arguments,
             "get_forum_posts",
-            { user_api_key: settings.user_key, forum_id: this.id },
+            { user_api_key: apiKey, forum_id: this.id },
             function (message) {
                 var posts = [];
 
@@ -244,7 +241,7 @@ var disqus = (function () {
     Forum.prototype.getCategoriesList = function () {
         apiGet(arguments,
             "get_categories_list",
-            { user_api_key: settings.user_key, forum_id: this.id },
+            { user_api_key: apiKey, forum_id: this.id },
             function (message) {
                 var categories = [];
 
@@ -264,7 +261,7 @@ var disqus = (function () {
     Forum.prototype.getThreadList = function () {
         apiGet(arguments,
             "get_thread_list",
-            { user_api_key: settings.user_key, forum_id: this.id },
+            { user_api_key: apiKey, forum_id: this.id },
             function (message) {
                 var threads = [];
 
@@ -282,7 +279,7 @@ var disqus = (function () {
     Forum.prototype.getUpdatedThreads = function (since) {
         apiGet(arguments,
             "get_updated_threads",
-            { user_api_key: settings.user_key, forum_id: this.id,
+            { user_api_key: apiKey, forum_id: this.id,
                 since: formatDate(since) },
             function (message) {
                 var threads = [];
@@ -323,7 +320,7 @@ var disqus = (function () {
         requireForumApiKey(function () {
             apiPost(arguments,
                 "thread_by_identifier",
-                { forum_api_key: this.api_key, identifier: identifier,
+                { forum_api_key: this.apiKey, identifier: identifier,
                     title: title });
         }, this, arguments);
         
@@ -338,7 +335,7 @@ var disqus = (function () {
         requireForumApiKey(function () {
             apiGet(arguments,
                 "get_thread_by_url",
-                { forum_api_key: this.api_key, url: url },
+                { forum_api_key: this.apiKey, url: url },
                 function (message) {
                     return $.extend(new Thread(), message, {
                         created_at: new Date(message.created_at)
@@ -388,7 +385,7 @@ var disqus = (function () {
     Thread.prototype.getThreadPosts = function () {
         apiGet(arguments,
             "get_thread_posts",
-            { user_api_key: settings.user_key, thread_id: this.id },
+            { user_api_key: apiKey, thread_id: this.id },
             function (message) {
                 var posts = [];
 
@@ -420,7 +417,7 @@ var disqus = (function () {
         requireForumApiKey(function () {
             apiPost(arguments,
                 "update_thread",
-                { forum_api_key: forum.api_key, thread_id: this.thread_id });
+                { forum_api_key: forum.apiKey, thread_id: this.thread_id });
         }, forum, arguments, this);
 
         return this;
@@ -449,7 +446,7 @@ var disqus = (function () {
         requireForumApiKey(function () {
             apiPost(arguments,
                 "create_post",
-                { forum_api_key: forum.api_key, thread_id: this.thread_id,
+                { forum_api_key: forum.apiKey, thread_id: this.thread_id,
                     message: message, author_name: author_name,
                     author_email: author_email });
         }, forum, arguments, this);
@@ -479,7 +476,7 @@ var disqus = (function () {
     Post.prototype.moderatePost = function (action) {
         apiPost(arguments,
             "moderate_post",
-            { user_api_key: settings.user_key, post_id: this.id,
+            { user_api_key: apiKey, post_id: this.id,
                 action: action });
     };
 
@@ -489,15 +486,10 @@ var disqus = (function () {
 
     /** @scope disqus */
     return {
-        userKeyUrl: "http://disqus.com/api/get_my_key/",
-
-        setLogger: function (logFn) {
-            settings.logger = logFn;
-            return this;
-        },
+        apiKeyUrl: "http://disqus.com/api/get_my_key/",
         
-        setUserKey: function (user_key) {
-            settings.user_key = user_key;
+        setApiKey: function (api_key) {
+            apiKey = api_key;
             return this;
         },
               
@@ -506,14 +498,14 @@ var disqus = (function () {
         getUserName: function () {
             apiPost(arguments,
                 "get_user_name",
-                { user_api_key: settings.user_key });
+                { user_api_key: apiKey });
             return this;
         },
         
         getForumList: function () {
             apiGet(arguments,
                 "get_forum_list",
-                { user_api_key: settings.user_key },
+                { user_api_key: apiKey },
                 function (message) {
                     var forums = [];
                     
@@ -531,9 +523,9 @@ var disqus = (function () {
         getNumPosts: function (threadIds) {
             apiGet(arguments,
                 "get_num_posts",
-                { user_api_key: settings.user_key,
+                { user_api_key: apiKey,
                     thread_ids: threadIds.toString() });
             return this;
         }
     };
-})();
+})(jQuery, window.console && console.log);
