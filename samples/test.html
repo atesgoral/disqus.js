@@ -40,7 +40,7 @@ function listThreads(threads) {
 }
 
 $(function () {
-    $("#api_key_lookup").attr("href", disqus.userKeyUrl);
+    $("#api_key_lookup").attr("href", disqus.apiKeyUrl);
 
     $("#api_key").keypress(function (e) {
         if ((e.keyCode || e.which) == 13) {
