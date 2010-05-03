@@ -1,0 +1,199 @@
+<html>
+<head>
+<style type="text/css">
+body {
+    margin: 0;
+    padding: 20px;
+    font: 12px Arial, sans-serif;
+}
+
+a {
+    text-decoration: none;
+}
+
+#templates {
+    display: none;
+}
+
+li.collapsed .details {
+    display: none;
+}
+
+.details {
+    background: #eee;
+    padding: 10px;
+}
+
+.details ul {
+    margin: 0;
+    padding: 0;
+    font-size: 10px;
+}
+
+.details li {
+    list-style-type: none;
+    float: left;
+    margin: 0 10px 10px 0;
+    text-transform: uppercase;
+}
+
+.details .field {
+    padding: 5px 0;
+}
+
+.details .field input {
+    display: none;
+}
+
+.details .field.fit span {
+    display: block;
+}
+
+.details.edit .field span {
+    display: none;
+}
+
+.details.edit .field input {
+    display: inline;
+}
+
+.details.edit .field.fit input {
+    display: block;
+}
+
+.details label {
+    font-weight: bold;
+}
+
+.clear {
+    clear: left;
+}
+
+</style>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script type="text/javascript" src="../disqus.js"></script>
+<script type="text/javascript">
+$(function () {
+    $("#api_key_lookup").attr("href", disqus.apiKeyUrl);
+
+    $("#api_key").val(document.location.search.replace("?", ""));
+    
+    $("#load_forums").click(function () {
+        disqus.setApiKey($("#api_key").val()).getForumList(listForums);
+    });
+
+    var $forums = $("#forums").change(forumSelected);
+    var $threads = $("#threads");
+    
+    $("a.expand", $threads).live("click", function () {
+        $(this.parentNode).toggleClass("collapsed");
+        return false;
+    });
+
+    var tmp_thread_details = decodeURI($("#tmp_thread_details").html());
+
+    var forums;
+    var threads;
+    
+    function listForums() {
+        forums = arguments[0];
+        $forums.empty();
+
+        $.each(forums, function (i, forum) {
+            $forums.append($('<option value="' + forum.id + '">'
+                + forum.name + "</option>"));
+        });
+        
+        if (forums.length) {
+            forums[0].getThreadList(listThreads);
+        }
+    }
+    
+    function forumSelected() {
+        $.each(forums, function (i, forum) {
+            if (forum.id == this.value) {
+                forum.getThreadList(listThreads);
+                return false;
+            }
+        });
+    }
+    
+    function listThreads() {
+        threads = arguments[0];
+        $threads.empty();
+
+        $.each(threads, function (i, thread) {
+            var $li = $('<li id="thread_' + thread.id
+                + '" class="collapsed"><a class="expand" href="#">'
+                + thread.title + '</a><div class="details"></div></li>');
+            $threads.append($li);
+            showThreadDetails(thread);
+        });
+    }
+    
+    function showThreadDetails(thread) {
+        var $details = $("#thread_" + thread.id + " .details");
+        
+        $details.html(tmp_thread_details.replace(/\{(.+?)\}/g, function (s, t) {
+            return thread[t];
+        }));
+        
+        $("a.refresh", $details).click(function () {
+            thread.forum.getThreadByUrl(thread.url, function (thread) {
+                showThreadDetails(thread);
+            });
+        });
+
+        $("a.edit", $details).click(function () {
+            $details.toggleClass("edit");
+            return false;
+        });
+    }
+});
+</script>
+</head>
+<body>
+<h3>API Key</h3>
+<input type="text" size="64" id="api_key"/> <a href="#" id="api_key_lookup" target="_blank">?</a>
+<button id="load_forums">Load Forums</button>
+<h3>Forums</h3>
+<select id="forums">
+</select>
+<h3>Threads</h3>
+<ol id="threads">
+</ol>
+<div id="templates">
+    <div id="tmp_thread_details">
+        <ul>
+            <li><a class="refresh" href="#">Refresh</a></li>
+            <li><a class="edit" href="#">Edit</a></li>
+            <li><a class="load_posts" href="#">Load posts</a></li>
+        </ul>
+        <div class="clear"></div>
+        <div class="field fit">
+            <label>Title</label>
+            <span>{title}</span>
+            <input type="text" size="80" value="{title}"/> 
+        </div>
+        <div class="field fit">
+            <label>URL</label>
+            <span><a href="{url}">{url}</a></span>
+            <input type="text" size="80" value="{url}"/> 
+        </div>
+        <div class="field fit">
+            <label>Slug</label>
+            <span>{slug}</span>
+            <input type="text" size="80" value="{slug}"/> 
+        </div>
+        <div class="field">
+            <span class="boolean {allow_comments}">{allow_comments}</span>
+            <input type="checkbox" checked="{allow_comments}"/>
+            <label>Allow comments</label>
+        </div>
+        <div class="field">
+            <input type="submit" value="Save"/>
+        </div>
+    </div>
+</div>
+</body>
+</html>

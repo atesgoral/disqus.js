@@ -210,7 +210,7 @@ var disqus = (function ($, logFn) {
 
     /**
      * @param {Object} [options] Object with optional parameters
-       * @param {Number} [options.category_id] Filter entries by category
+     * @param {Number} [options.category_id] Filter entries by category
      * @param {Number} [options.limit] Number of entries that should be included
      *                                 in the response. Default is 25.
      * @param {Number} [options.start] Starting point for the query. Default is
@@ -266,9 +266,7 @@ var disqus = (function ($, logFn) {
                 var threads = [];
 
                 $.each(message, function (i, thread_data) {
-                    threads.push($.extend(new Thread(), thread_data, {
-                        created_at: new Date(thread_data.created_at)
-                    }));
+                    threads.push(new Thread(thread_data));
                 });
                 
                 return threads;
@@ -285,9 +283,7 @@ var disqus = (function ($, logFn) {
                 var threads = [];
 
                 $.each(message, function (i, thread_data) {
-                    threads.push($.extend(new Thread(), thread_data, {
-                        created_at: new Date(thread_data.created_at)
-                    }));
+                    threads.push(new Thread(thread_data));
                 });
                 
                 return threads;
@@ -337,15 +333,24 @@ var disqus = (function ($, logFn) {
                 "get_thread_by_url",
                 { forum_api_key: this.apiKey, url: url },
                 function (message) {
-                    return $.extend(new Thread(), message, {
-                        created_at: new Date(message.created_at)
-                    });
+                    return new Thread(message);
                 });
         }, this, arguments);
         
         return this;
     };
     
+    ////////////////////////////////////////////////////////////////////////////
+    // Forum factory
+    ////////////////////////////////////////////////////////////////////////////
+
+    var forums = {};
+
+    function getForum(id) {
+        return forums[id]
+            || (forums[id] = new Forum(id));
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Category class
     ////////////////////////////////////////////////////////////////////////////
@@ -355,8 +360,21 @@ var disqus = (function ($, logFn) {
      * @class Represents a Disqus category
      * @name Category
      */
-    function Category() {}
+    function Category(category_data) {
+        $.extend(this, category_data);
+    }
     
+    ////////////////////////////////////////////////////////////////////////////
+    // Category factory
+    ////////////////////////////////////////////////////////////////////////////
+
+    var categories = {};
+
+    function getCategory(id, category_data) {
+        return categories[id]
+            || (categories[id] = new Category(category_data));
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Thread class
     ////////////////////////////////////////////////////////////////////////////
@@ -366,7 +384,14 @@ var disqus = (function ($, logFn) {
      * @class Represents a Disqus discussion thread
      * @name Thread
      */
-    function Thread() {}
+    function Thread(thread_data) {
+        $.extend(this, thread_data, {
+            category: getCategory(thread_data.category.id,
+                thread_data.category),
+            created_at: new Date(thread_data.created_at),
+            forum: getForum(thread_data.forum)
+        });
+    }
 
     /**
      * Get a list of posts in a thread
